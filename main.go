@@ -26,6 +26,8 @@ var transcodePVC = os.Getenv("TRANSCODE_PVC")
 // pms namespace
 var namespace = os.Getenv("KUBE_NAMESPACE")
 
+var containersPrivileged = true
+
 // image for the plexmediaserver container containing the transcoder. This
 // should be set to the same as the 'master' pms server
 var pmsImage = os.Getenv("PMS_IMAGE")
@@ -117,6 +119,9 @@ func generatePod(cwd string, env []string, args []string) *corev1.Pod {
 					Image:      pmsImage,
 					Env:        envVars,
 					WorkingDir: cwd,
+					SecurityContext: &corev1.SecurityContext{
+                                                Privileged: &containersPrivileged,
+                                        },
 					VolumeMounts: []corev1.VolumeMount{
 						{
 							Name:      "data",
@@ -131,6 +136,10 @@ func generatePod(cwd string, env []string, args []string) *corev1.Pod {
 						{
 							Name:      "transcode",
 							MountPath: "/transcode",
+						},
+						{
+							Name:      "dev-dri",
+							MountPath: "/dev/dri",
 						},
 					},
 				},
@@ -160,6 +169,15 @@ func generatePod(cwd string, env []string, args []string) *corev1.Pod {
 						},
 					},
 				},
+				{
+					Name: "dev-dri",
+					VolumeSource: corev1.VolumeSource{
+						HostPath: &corev1.HostPathVolumeSource{
+							Path: "/dev/dri",
+						},
+					},
+				},
+
 			},
 		},
 	}
